@@ -1,0 +1,199 @@
+version: '3.8'
+
+services:
+  postgres:
+    hostname: postgres
+    image: ${postgresimage}
+    container_name: postgres
+    profiles: ["inactive"]
+    ports:
+      - 5432:5432
+    volumes:
+      - ${postgresdbmap}:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin      
+      POSTGRES_DB: metastore_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d metastore_db "]
+      interval: 15s
+      timeout: 15s
+      retries: 5
+    networks:
+      - datalake  
+  mysql:
+    hostname: mysql
+    image: ${mysqlimage}
+    container_name: mysqldb
+    profiles: ["inactive"]
+    ports:
+      - 3306:3306
+    volumes:
+      - ${mysqlmap}:/var/lib/mysql
+    environment:      
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: metastore_db
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    networks:
+      - datalake
+  mariadb:
+    hostname: mysql
+    image: ${mariadbimage}
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: mariadb
+    profiles: ["active"]
+    ports:
+      - 3306:3306
+    volumes:
+      - ${mariadbmap}:/var/lib/mysql
+    environment:
+      # DB_DRIVER: mysql
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: adminmet
+      MYSQL_PASSWORD: adminmet
+      MYSQL_DATABASE: metastore_db
+    healthcheck:
+      test: mariadb-admin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    networks:
+      - datalake
+  hive_metastore:
+    hostname: hive-metastore
+    container_name: hive_metastore
+    image: smartydarren/hive-standalonemetastore:3.1.3
+    build:
+      context: .
+      dockerfile: hivestandalonemetastore.dockerfile
+    profiles: ["active"]
+    ports:
+      - '9083:9083' # Metastore Thrift
+    volumes:
+      - ./conf/metastore-mariadb-site.xml:/opt/apache-hive-metastore-3.1.3-bin/conf/metastore-site.xml:ro
+    environment:
+      METASTORE_DB_HOSTNAME: mysql
+      METASTORE_TYPE: mysql
+      SERVICE_NAME: metastore
+    depends_on:
+      #postgresdb:
+      mariadb:
+      #mysql:
+        condition: service_healthy
+    networks:
+      - datalake
+  hive_metastore_official_apache:
+    hostname: hive-metastore # no underscore or dot allowed, hive thinks _ and . are hidden files
+    image: hive:latest
+    build:
+      context: .
+      dockerfile: hive.dockerfile
+    container_name: hive_metastore-new
+    user: hive
+    profiles: ["inactive"]
+    ports:
+      - '9083:9083' # Hive Metastore service connecting to inbuilt derby or external RDBMS
+    environment:
+      - SERVICE_NAME=metastore # do not chage this, its a keyword used by Hive      
+      - DB_DRIVER=mysql
+      #- HIVE_CUSTOM_CONF_DIR=/hive_custom_conf
+      # - SERVICE_OPTS=-Djavax.jdo.option.ConnectionDriverName=com.mysql.cj.jdbc.Driver -Djavax.jdo.option.ConnectionURL=jdbc:mysql://hive_mariadb:3306/metastore_db -Djavax.jdo.option.ConnectionUserName=admin -Djavax.jdo.option.ConnectionPassword=admin
+      # - SERVICE_OPTS=-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://hive_postgres:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=admin -Djavax.jdo.option.ConnectionPassword=admin    
+    depends_on:
+      #postgres:
+      #mariadb:
+      mysql:
+        condition: service_healthy
+    volumes:
+        #- ./conf/metastore-pg-site.xml:/opt/hive/conf/metastore-site.xml:ro
+        #- ./conf/metastore-pg-site.xml:/opt/hive/conf/metastore-site.xml:ro
+        - ./conf/metastore-mysql-site.xml:/opt/hive/conf/metastore-site.xml:ro
+      #  - ./conf:/opt/hive/conf
+        - ${hivemap}/warehouse:/opt/hive/data/warehouse
+      # - ${hivemap}/home/hive/:/home/hive/
+      # - ${hivemap}/lib:/opt/hive/lib/
+    networks:
+      - datalake
+  minio-store:
+      hostname: minio-store
+      image: ${minioimage}
+      container_name: minio-store
+      profiles: ["active"]
+      ports:
+        - '9000:9000'
+        - '9001:9001'
+      volumes:
+        - ${miniomap}:/mnt/data
+      environment:
+        MINIO_ROOT_USER: minio
+        MINIO_ROOT_PASSWORD: minio123
+        MINIO_VOLUMES: /mnt/data
+      command: server /mnt/data --console-address ":9001"
+      networks:
+        - datalake
+  trino:
+    hostname: trino
+    image: ${trinoimage}
+    container_name: trino
+    profiles: ["active"]
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./trino/etc:/etc/trino:ro # This container folder should be mapped      
+    networks:
+      - datalake
+  hive_runtime:
+    hostname: hive_runtime
+    image: hive:latest
+    container_name: hive_runtime
+    profiles: ["inactive"]
+    ports:
+      - '10000:10000' # Metastore Thrift Protocol
+      - '10002:10002' # UI
+    environment:
+      - SERVICE_NAME=hiveserver2 #HS2 do not chage this, its a keyword used by Hive
+      - SERVICE_OPTS=-Dhive.metastore.uris=thrift://hive-metastore:9083 # hostname & Port Number of the standalone metastore    
+      - IS_RESUME=true      
+    depends_on:
+      - hive_metastore
+    networks:
+      - datalake
+
+volumes:
+  minio-data:
+    driver: local
+
+networks:
+  datalake:
+    driver: bridge
+
+
+# cd D:\LearnToCode\GitRepos\allarounddata\DataLake_MinioTrinoHiveSQL
+# docker compose -f ./docker-compose.yml --env-file ./plpt.env build --no-cache --pull
+# docker compose -f ./docker-compose.yml --env-file=./plpt.env --profile=active up -d
+# docker compose -f ./docker-compose.yml --env-file=./plpt.env --profile=active down
+# docker container rm --force $(docker ps --quiet --all)
+# docker image prune -f
+
+#OLPT
+# cd C:\Darren\LearnToCode\GitRepos\DataPipeline\SSSPL-Dagster-Starlink\DataLake\hivecontainer
+# docker compose -f ./docker-compose.yml --env-file ./olpt.env build --no-cache --pull
+# docker compose -f ./docker-compose.yml --env-file=./olpt.env --profile=active up -d
+# docker compose -f ./docker-compose.yml --env-file=./olpt.env --profile=active down
+# docker exec -it hive_runtime beeline -u 'jdbc:hive2://localhost:10000/'
+
+
+# https://github.com/arempter/hive-metastore-docker
+# https://techjogging.com/standalone-hive-metastore-presto-docker.html
+# https://repo1.maven.org/maven2/org/apache/hive/hive-standalone-metastore/4.0.0-beta-1/
+# https://medium.com/analytics-vidhya/hive-installation-on-ubuntu-18-04-b3362dcadfb8
+# https://techjogging.com/access-minio-s3-storage-prestodb-cluster-hive-metastore.html -- create tables
+
+# Maria Db 10.5.11 after this doesnt version
+#hiveimagesl="bitsondatadev/hive-metastore:latest"
