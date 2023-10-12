@@ -18,11 +18,13 @@ RUN curl -L https://repo1.maven.org/maven2/org/apache/hive/hive-standalone-metas
     curl -L https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-8.1.0.tar.gz | tar zxf - && \
     curl -L --output mariadb-java-client-3.2.0.jar https://dlm.mariadb.com/3418100/Connectors/java/connector-java-3.2.0/mariadb-java-client-3.2.0.jar && \
     curl -L --output postgresql-42.6.0.jar https://jdbc.postgresql.org/download/postgresql-42.6.0.jar && \
+    curl -L --output guava-32.1.2-jre.jar https://repo1.maven.org/maven2/com/google/guava/guava/32.1.2-jre/guava-32.1.2-jre.jar && \
     cp mysql-connector-j-8.1.0/mysql-connector-j-8.1.0.jar ${HIVE_HOME}/lib/ && \
     cp mariadb-java-client-3.2.0.jar ${HIVE_HOME}/lib && \
     cp postgresql-42.6.0.jar ${HIVE_HOME}/lib && \
     # Replacing the Google Library jar in hive/lib file to avoid conflicts with hadoop classpath
-    cp ${HADOOP_HOME}/share/hadoop/hdfs/lib/guava-27.0-jre.jar ${HIVE_HOME}/lib/ && \    
+    cp guava-32.1.2-jre.jar ${HIVE_HOME}/lib/ && \
+    #cp ${HADOOP_HOME}/share/hadoop/hdfs/lib/guava-27.0-jre.jar ${HIVE_HOME}/lib/ && \    
     rm -rf hive-standalone-metastore-${METASTORE_VERSION}-bin.tar.gz && \
     rm -rf hadoop-${HADOOP_VERSION}.tar.gz && \
     rm -rf mysql-connector-j-8.1.0.tar.gz && \

@@ -173,7 +173,7 @@ networks:
   datalake:
     driver: bridge
 
-
+#PLPT
 # cd D:\LearnToCode\GitRepos\allarounddata\DataLake_MinioTrinoHiveSQL
 # docker compose -f ./docker-compose.yml --env-file ./plpt.env build --no-cache --pull
 # docker compose -f ./docker-compose.yml --env-file=./plpt.env --profile=active up -d
