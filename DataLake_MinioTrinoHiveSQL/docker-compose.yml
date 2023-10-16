@@ -182,7 +182,7 @@ networks:
 # docker image prune -f
 
 #OLPT
-# cd C:\Darren\LearnToCode\GitRepos\DataPipeline\SSSPL-Dagster-Starlink\DataLake\hivecontainer
+# cd C:\Darren\LearnToCode\GitRepos\allarounddata\DataLake_MinioTrinoHiveSQL
 # docker compose -f ./docker-compose.yml --env-file ./olpt.env build --no-cache --pull
 # docker compose -f ./docker-compose.yml --env-file=./olpt.env --profile=active up -d
 # docker compose -f ./docker-compose.yml --env-file=./olpt.env --profile=active down
