@@ -1,4 +1,5 @@
 FROM openjdk:8u342-jre
+#FROM openjdk@sha256:a6a74c7b774e00fd2ec5664e257d344f1b7e69e2a618b1c0678f69719863c5ad
 LABEL maintainer="smartydarren@gmail.com"
 
 #dos2unix - to change the end of line sequence to LF as we are running linux container built on windows 11 - docker desktop
@@ -7,8 +8,8 @@ RUN apt-get update && apt-get install dos2unix && \
 
 WORKDIR /opt
 
-ENV HADOOP_VERSION=3.3.6
-ENV METASTORE_VERSION=3.1.3
+ENV HADOOP_VERSION=3.2.0
+ENV METASTORE_VERSION=3.0.0
 
 ENV HADOOP_HOME=/opt/hadoop-${HADOOP_VERSION}
 ENV HIVE_HOME=/opt/apache-hive-metastore-${METASTORE_VERSION}-bin
@@ -23,15 +24,16 @@ RUN curl -L https://repo1.maven.org/maven2/org/apache/hive/hive-standalone-metas
     cp mariadb-java-client-3.2.0.jar ${HIVE_HOME}/lib && \
     cp postgresql-42.6.0.jar ${HIVE_HOME}/lib && \
     # Replacing the Google Library jar in hive/lib file to avoid conflicts with hadoop classpath
-    cp guava-32.1.2-jre.jar ${HIVE_HOME}/lib/ && \
+    #cp guava-32.1.2-jre.jar ${HIVE_HOME}/lib/ && \
     #cp ${HADOOP_HOME}/share/hadoop/hdfs/lib/guava-27.0-jre.jar ${HIVE_HOME}/lib/ && \    
     rm -rf hive-standalone-metastore-${METASTORE_VERSION}-bin.tar.gz && \
     rm -rf hadoop-${HADOOP_VERSION}.tar.gz && \
     rm -rf mysql-connector-j-8.1.0.tar.gz && \
     rm -rf mysql-connector-j-8.1.0.jar && \
     rm -rf postgresql-42.6.0.jar && \  
-    rm -rf mariadb-java-client-3.2.0.jar && \    
-    rm -rf ${HIVE_HOME}/lib/guava-19.0.jar
+    rm -rf mariadb-java-client-3.2.0.jar 
+    #&& \    
+    #rm -rf ${HIVE_HOME}/lib/guava-19.0.jar
    
 COPY scripts/entrypoint.sh /entrypoint.sh
 # Changing the end of line sequence to LF
@@ -49,8 +51,8 @@ ENTRYPOINT ["sh", "-c", "/entrypoint.sh"]
 
 
 # cd D:\LearnToCode\GitRepos\allarounddata\DataLake_MinioTrinoHiveSQL
-# docker build . --tag smartydarren/hive-standalonemetastore:3.1.3 -f ./hivestandalonemetastore.dockerfile --no-cache
-# docker container run -d -p 9083:9083 --name hivestandalonemetastore smartydarren/hive-standalonemetastore:3.1.3
+# docker build . --tag smartydarren/hive-standalonemetastore:3.0.0 -f ./hiveslmst-c1.dockerfile --no-cache
+# docker container run -d -p 9083:9083 --name hivestandalonemetastore smartydarren/hive-standalonemetastore:3.0.0
 # docker container run -d -p 9083:9083 --name hivestandalonemetastore --env METASTORE_DB_HOSTNAME=mysql --env METASTORE_TYPE=mysql --env SERVICE_NAME=metastore smartydarren/hive-standalonemetastore:3.1.3
 # docker container exec --interactive --tty --workdir=/opt smartydarren/hive-standalonemetastore:3.1.3 /bin/sh
 # docker container rm --force $(docker ps --quiet --all)
@@ -58,3 +60,6 @@ ENTRYPOINT ["sh", "-c", "/entrypoint.sh"]
 #
 # docker container run -d -p 10000:10000 -p 10002:10002 --env SERVICE_NAME=hiveserver2 --name hivebeta1 apache/hive:4.0.0-beta-1
 # docker container run -d -p 9083:9083 --env SERVICE_NAME=metastore --name metastore-standalone hive:latest
+
+
+# Bitsondatadev Image works fine even while dropping schema - https://github.com/bitsondatadev/hive-metastore/blob/master/Dockerfile
