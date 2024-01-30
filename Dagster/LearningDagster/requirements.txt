@@ -1,0 +1,33 @@
+requests==2.31.0
+dagster==1.6.1
+dagster-webserver==1.6.1
+
+
+# Creating the Env-------
+# C:\Users\dquadros\AppData\Local\Programs\Python\Python311\python -m venv D:\LearnToCode\pythonVenv\LearnPythonEnv --Olpt
+# C:\Users\darre\AppData\Local\Programs\Python\Python311\python -m venv D:\TestingData\PythonEnvs\Dagster --plpt
+
+
+# Switch to the Env------
+# C:\Darren\TestingData\PythonVirtualEnviornments\LearnPythonEnv\Scripts\activate.bat AND C:\Darren\TestingData\PythonVirtualEnviornments\LearnPythonEnv\Scripts\deactivate.bat
+# D:\TestingData\PythonEnvs\Dagster\Scripts\activate.bat AND D:\TestingData\PythonEnvs\Dagster\Scripts\deactivate.bat --Personal laptop
+
+# Switch to our folder------
+
+# Install the packages------
+# pip install -r C:\Users\dquadros\OneDrive\Office\LEARNING\Python\requirements.txt --olpt
+# pip install -r .\requirements.txt --plpt
+
+
+# In VsCode switch the Interpreter by opening command palette ctr+Shit+p >> Python: Select Interpreter
+#
+# D:\TestingData\PythonEnvs\SSSPL-Dagster-Starlink\Scripts\python --plpt
+
+'''
+Set the following envionrnmental variables
+dagster dev -f hello-dagster.py
+SET PYTHONLEGACYWINDOWSSTDIO=enable
+SET DAGSTER_HOME=C:\Users\darre\OneDrive\Office\LEARNING\mycodepath\allarounddata\Dagster\LearningDagster
+echo %PYTHONLEGACYWINDOWSSTDIO%
+echo %DAGSTER_HOME%
+'''
